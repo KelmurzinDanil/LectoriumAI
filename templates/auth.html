@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Вход — Лекторий.AI</title>
+
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            :root {
+                --bg-app: #f4f5f7;
+                --primary-color: #4f46e5;
+                --primary-hover: #4338ca;
+                --text-main: #1f2937;
+                --text-muted: #6b7280;
+                --border-color: #e5e7eb;
+            }
+
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: var(--bg-app);
+                color: var(--text-main);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            /* Кнопка "Назад" поверх всего */
+            .btn-back {
+                position: absolute;
+                top: 30px;
+                left: 30px;
+                color: var(--text-muted);
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 500;
+                transition: color 0.2s;
+            }
+            .btn-back:hover {
+                color: var(--text-main);
+            }
+
+            .auth-card {
+                background: #ffffff;
+                width: 100%;
+                max-width: 420px;
+                padding: 40px;
+                border-radius: 16px;
+                box-shadow:
+                    0 10px 25px -5px rgba(0, 0, 0, 0.05),
+                    0 8px 10px -6px rgba(0, 0, 0, 0.01);
+                border: 1px solid var(--border-color);
+            }
+
+            .logo-icon {
+                color: var(--primary-color);
+                margin-bottom: 16px;
+            }
+
+            .form-control {
+                border-color: #d1d5db;
+                border-radius: 8px;
+                padding-top: 1.625rem;
+                padding-bottom: 0.625rem;
+            }
+            .form-control:focus {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            }
+            .form-floating label {
+                color: var(--text-muted);
+            }
+
+            .btn-primary {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+                border-radius: 8px;
+                padding: 12px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+            .btn-primary:hover {
+                background-color: var(--primary-hover) !important;
+                border-color: var(--primary-hover) !important;
+            }
+
+            a.link-text {
+                color: var(--primary-color);
+                text-decoration: none;
+                font-weight: 500;
+            }
+            a.link-text:hover {
+                color: var(--primary-hover);
+                text-decoration: underline;
+            }
+
+            .form-check-input:checked {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+            .form-check-input:focus {
+                box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+            }
+
+            .password-toggle {
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                padding: 0;
+                z-index: 10;
+            }
+            .password-toggle:hover {
+                color: var(--text-main);
+            }
+
+            .fade-transition {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(5px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @media (max-width: 480px) {
+                .auth-card {
+                    padding: 30px 20px;
+                }
+                .btn-back {
+                    top: 15px;
+                    left: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Ссылка назад на главную -->
+        <a href="/" class="btn-back">
+            <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            На главную
+        </a>
+
+        <div class="auth-card">
+            <div class="text-center mb-4">
+                <svg
+                    class="logo-icon"
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+                    />
+                </svg>
+                <h4 class="fw-bold mb-1" id="form-title">С возвращением</h4>
+                <p class="text-muted fs-6" id="form-subtitle">
+                    Войдите в свой аккаунт Лекторий.AI
+                </p>
+            </div>
+
+            <!-- ФОРМА ВХОДА -->
+            <form id="login-form" class="fade-transition" action="/login" method="POST">
+                <div class="form-floating mb-3">
+                    <input
+                        name="email"
+                        type="email"
+                        class="form-control"
+                        id="loginEmail"
+                        placeholder="name@example.com"
+                        required
+                    />
+                    <label for="loginEmail">Email</label>
+                </div>
+
+                <div class="form-floating mb-3 position-relative">
+                    <input
+                        name="password" 
+                        type="password"
+                        class="form-control pe-5"
+                        id="loginPassword"
+                        placeholder="Пароль"
+                        required
+                    />
+                    <label for="loginPassword">Пароль</label>
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        onclick="togglePassword('loginPassword', this)"
+                    >
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="eye-icon"
+                        >
+                            <path
+                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                            ></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+
+                <div
+                    class="d-flex justify-content-between align-items-center mb-4 mt-2"
+                >
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            value=""
+                            id="rememberMe"
+                            checked
+                        />
+                        <label
+                            class="form-check-label text-muted fs-6"
+                            style="font-size: 14px"
+                            for="rememberMe"
+                            >Запомнить</label
+                        >
+                    </div>
+                    <a href="#" class="link-text" style="font-size: 14px"
+                        >Забыли пароль?</a
+                    >
+                </div>
+
+                <!-- После успешного входа возвращаем на index.html -->
+                <button
+                    type="submit"
+                    class="btn btn-primary w-100 mb-4 d-block text-center text-white text-decoration-none"
+                >
+                    Войти
+                </button>
+
+                <div class="text-center text-muted" style="font-size: 14px">
+                    Нет аккаунта?
+                    <a
+                        href="#register"
+                        class="link-text"
+                        onclick="switchForm('register')"
+                        >Зарегистрироваться</a
+                    >
+                </div>
+            </form>
+
+            <!-- ФОРМА РЕГИСТРАЦИИ -->
+            <form
+                id="register-form"
+                class="fade-transition"
+                style="display: none"
+                action="/register" 
+                method="POST"
+            >
+                <div class="form-floating mb-3">
+                    <input
+                        name="name"
+                        type="text"
+                        class="form-control"
+                        id="regName"
+                        placeholder="Иван Иванов"
+                        required
+                    />
+                    <label for="regName">Имя и Фамилия</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input
+                        name="email"
+                        type="email"
+                        class="form-control"
+                        id="regEmail"
+                        placeholder="name@example.com"
+                        required
+                    />
+                    <label for="regEmail">Email</label>
+                </div>
+
+                <div class="form-floating mb-3 position-relative">
+                    <input
+                        name="password"
+                        type="password"
+                        class="form-control pe-5"
+                        id="regPassword"
+                        placeholder="Пароль"
+                        required
+                    />
+                    <label for="regPassword">Пароль</label>
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        onclick="togglePassword('regPassword', this)"
+                    >
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="eye-icon"
+                        >
+                            <path
+                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                            ></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- После успешной регистрации возвращаем на index.html -->
+                <button
+                    type="submit"
+                    class="btn btn-primary w-100 mb-4 mt-2 d-block text-center text-white text-decoration-none"
+                >
+                    Создать аккаунт
+                </button>
+
+                <div class="text-center text-muted" style="font-size: 14px">
+                    Уже есть аккаунт?
+                    <a
+                        href="#login"
+                        class="link-text"
+                        onclick="switchForm('login')"
+                        >Войти</a
+                    >
+                </div>
+            </form>
+        </div>
+
+        <script>
+            // При загрузке страницы проверяем URL
+            document.addEventListener("DOMContentLoaded", function () {
+                // Если в ссылке указано #register (например, при переходе с главной страницы)
+                if (window.location.hash === "#register") {
+                    switchForm("register");
+                } else {
+                    switchForm("login");
+                }
+            });
+
+            function switchForm(type) {
+                const loginForm = document.getElementById("login-form");
+                const registerForm = document.getElementById("register-form");
+                const formTitle = document.getElementById("form-title");
+                const formSubtitle = document.getElementById("form-subtitle");
+
+                if (type === "register") {
+                    loginForm.style.display = "none";
+                    registerForm.style.display = "block";
+                    formTitle.textContent = "Создать аккаунт";
+                    formSubtitle.textContent = "Присоединяйтесь к Лекторий.AI";
+                    document.title = "Регистрация — Лекторий.AI";
+                    window.history.replaceState(null, null, "#register"); // Меняем URL без перезагрузки
+                } else {
+                    registerForm.style.display = "none";
+                    loginForm.style.display = "block";
+                    formTitle.textContent = "С возвращением";
+                    formSubtitle.textContent =
+                        "Войдите в свой аккаунт Лекторий.AI";
+                    document.title = "Вход — Лекторий.AI";
+                    window.history.replaceState(null, null, "#login"); // Меняем URL без перезагрузки
+                }
+            }
+
+            function togglePassword(inputId, button) {
+                const input = document.getElementById(inputId);
+                const icon = button.querySelector(".eye-icon");
+
+                if (input.type === "password") {
+                    input.type = "text";
+                    icon.innerHTML =
+                        '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+                } else {
+                    input.type = "password";
+                    icon.innerHTML =
+                        '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+                }
+            }
+        </script>
+    </body>
+</html>

@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Лекторий.AI</title>
+
+        <!-- Подключаем Bootstrap 5 -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            :root {
+                --bg-app: #f4f5f7;
+                --bg-sidebar: #171717;
+                --bg-sidebar-hover: #2f2f2f;
+                --primary-color: #4f46e5;
+                --text-sidebar: #ececec;
+                --text-sidebar-muted: #9ca3af;
+            }
+
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: var(--bg-app);
+                overflow: hidden;
+            }
+
+            /* --- Боковая панель (История) --- */
+            .sidebar {
+                background-color: var(--bg-sidebar) !important;
+                --bs-offcanvas-bg: var(--bg-sidebar);
+                width: 280px;
+                transition: transform 0.3s ease;
+                border-right: none !important;
+            }
+
+            .btn-new-chat {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: #ffffff;
+                transition: background 0.2s;
+            }
+
+            .btn-new-chat:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+
+            .history-list {
+                overflow-y: auto;
+            }
+
+            .history-list::-webkit-scrollbar {
+                width: 4px;
+            }
+            .history-list::-webkit-scrollbar-thumb {
+                background-color: #4b5563;
+                border-radius: 4px;
+            }
+
+            .history-group-title {
+                font-size: 12px;
+                color: var(--text-sidebar-muted);
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .history-item {
+                padding: 10px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                color: var(--text-sidebar);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                transition: background 0.2s;
+            }
+
+            .history-item:hover,
+            .history-item.active {
+                background-color: var(--bg-sidebar-hover);
+                color: #ffffff;
+            }
+
+            /* --- Основная область --- */
+            .main-content {
+                height: 100vh;
+                overflow-y: auto;
+                position: relative;
+            }
+
+            .mode-switch {
+                background: #e5e7eb;
+                padding: 4px;
+                border-radius: 8px;
+            }
+            .mode-switch .btn {
+                border: none;
+                font-size: 14px;
+                font-weight: 500;
+                color: #6b7280;
+            }
+            .mode-switch .btn.active {
+                background: white;
+                color: #1f2937;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            /* --- Плавающая/закрепленная панель (Sticky Bar) --- */
+            .sticky-actions {
+                position: sticky;
+                top: 0;
+                z-index: 1020;
+                background: rgba(244, 245, 247, 0.85);
+                backdrop-filter: blur(8px);
+                border-bottom: 1px solid #e5e7eb;
+                padding: 12px 0;
+            }
+
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .status-success {
+                background: #ecfdf5;
+                color: #065f46;
+                border: 1px solid #a7f3d0;
+            }
+            .status-success::before {
+                content: "";
+                display: block;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background-color: #10b981;
+            }
+
+            .status-recording {
+                background: #fef2f2;
+                color: #991b1b;
+                border: 1px solid #fecaca;
+            }
+            .status-recording::before {
+                content: "";
+                display: block;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background-color: #ef4444;
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.4; }
+                100% { opacity: 1; }
+            }
+
+            .btn-record {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                border: none;
+            }
+
+            .btn-record.recording {
+                background-color: #ef4444;
+                color: white;
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            }
+            .btn-record.recording:hover {
+                background-color: #dc2626;
+            }
+
+            .btn-record.paused {
+                background-color: #10b981;
+                color: white;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            }
+            .btn-record.paused:hover {
+                background-color: #059669;
+            }
+
+            .canvas {
+                background: #ffffff;
+                padding: 40px;
+                border-radius: 16px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e5e7eb;
+                min-height: 60vh;
+            }
+
+            .canvas p {
+                line-height: 1.8;
+                font-size: 16px;
+                color: #374151;
+            }
+
+            @media (max-width: 768px) {
+                .canvas {
+                    padding: 20px;
+                }
+                .sticky-actions .d-flex {
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    justify-content: center !important;
+                }
+                .status-badge {
+                    font-size: 12px;
+                }
+            }
+        </style>
+    </head>
+    <body class="d-flex">
+        <!-- Боковая панель (Сайдбар) -->
+        <div
+            class="offcanvas-md offcanvas-start sidebar d-flex flex-column flex-shrink-0"
+            tabindex="-1"
+            id="sidebarMenu"
+        >
+            <div class="p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center gap-2 fw-bold text-white fs-5">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        Лекторий.AI
+                    </div>
+                    <!-- Крестик закрытия меню для мобильных телефонов -->
+                    <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+                </div>
+
+                {{#is_auth}}
+                <!-- Кнопка "Новый конспект" доступна только авторизованным -->
+                <button class="btn btn-new-chat w-100 d-flex align-items-center justify-content-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Новый конспект
+                </button>
+                {{/is_auth}}
+            </div>
+
+            <!-- ИСТОРИЯ КОНСПЕКТОВ -->
+            <div class="history-list px-3 pb-4 flex-grow-1">
+                {{#is_auth}}
+                    <div class="history-group-title mt-2 mb-2">Ваши записи</div>
+                    
+                    {{#user_history}}
+                        <div class="history-item" onclick="location.href='/history/{{id_history}}'">
+                            {{title}}
+                        </div>
+                    {{/user_history}}
+
+                    {{^user_history}}
+                        <div class="text-muted p-2" style="font-size: 13px;">У вас пока нет сохраненных конспектов.</div>
+                    {{/user_history}}
+                {{/is_auth}}
+
+                {{^is_auth}}
+                    <div class="text-muted text-center mt-5" style="font-size: 13px;">
+                        Авторизуйтесь, чтобы видеть историю своих лекций.
+                    </div>
+                {{/is_auth}}
+            </div>
+        </div>
+
+        <!-- Основная рабочая область -->
+        <div class="main-content flex-grow-1 d-flex flex-column w-100">
+            <!-- Шапка (Header) -->
+            <header class="d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-light d-md-none border" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+
+                    <div class="mode-switch d-flex">
+                        <button id="btn-online" class="btn active px-3 py-1" onclick="switchMode('online')">Онлайн-запись</button>
+                        <button id="btn-offline" class="btn px-3 py-1" onclick="switchMode('offline')">Загрузка аудио</button>
+                    </div>
+                </div>
+
+                <!-- БЛОК АВТОРИЗАЦИИ / ПРОФИЛЯ -->
+                <div class="d-none d-sm-flex align-items-center gap-3">
+                    {{#is_auth}}
+                        <div class="text-end">
+                            <div class="fw-bold text-dark" style="font-size: 14px;">{{user_name}}</div>
+                            <div class="text-muted" style="font-size: 11px; text-transform: uppercase;">{{user_role}}</div>
+                        </div>
+                        <a href="/logout" class="btn btn-outline-danger btn-sm fw-medium">Выйти</a>
+                    {{/is_auth}}
+
+                    {{^is_auth}}
+                        <a href="/auth#register" class="btn btn-light fw-medium text-decoration-none text-dark">Регистрация</a>
+                        <a href="/auth#login" class="btn fw-medium text-white text-decoration-none" style="background-color: var(--primary-color); border: none;">Войти</a>
+                    {{/is_auth}}
+                </div>
+            </header>
+
+            <!-- Контент с текстом -->
+            <main class="flex-grow-1 position-relative">
+                <!-- ЗАКРЕПЛЕННАЯ ПАНЕЛЬ (Кнопки записи) -->
+                <div class="sticky-actions px-3 px-md-4">
+                    <div class="container-fluid max-w-800 mx-auto p-0 d-flex justify-content-between align-items-center" style="max-width: 800px">
+                        
+                        {{#is_auth}}
+                            <div id="status-online" class="status-badge status-recording">Ожидание...</div>
+                            <div id="status-offline" class="status-badge status-success" style="display: none">Готово к загрузке</div>
+
+                            <div id="controls-online">
+                                <button id="play-stop-btn" class="btn-record paused" onclick="toggleRecording()" title="Начать/Остановить запись">
+                                    <svg id="icon-stop" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none">
+                                        <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
+                                    </svg>
+                                    <svg id="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <button class="btn btn-outline-secondary bg-white d-flex align-items-center gap-2 rounded-3 fw-medium shadow-sm">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span class="d-none d-sm-inline">Сохранить</span>
+                            </button>
+                        {{/is_auth}}
+                        
+                        {{^is_auth}}
+                            <div class="w-100 text-center text-muted fw-medium py-2">
+                                Для начала работы с микрофоном необходимо авторизоваться
+                            </div>
+                        {{/is_auth}}
+                    </div>
+                </div>
+
+                <!-- Холст / Текст лекции -->
+                <div class="container-fluid py-4 mb-5" style="max-width: 800px">
+                    <div class="canvas">
+                        {{#has_content}}
+                            <!-- Если мы открыли сохраненную лекцию -->
+                            <h1 class="h3 fw-bold mb-4">{{current_title}}</h1>
+                            <div class="content-text" style="white-space: pre-wrap;">{{current_content}}</div>
+                        {{/has_content}}
+
+                        {{^has_content}}
+                            <!-- Дефолтное окно приветствия -->
+                            <div class="text-center py-5 mt-5">
+                                <div class="mb-4">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                    </svg>
+                                </div>
+                                <h1 class="h3 fw-bold text-dark">Добро пожаловать в Лекторий.AI</h1>
+                                <p class="text-muted mt-3 fs-5">
+                                    {{#is_auth}}
+                                        Нажмите кнопку записи на панели выше, чтобы начать транскрибацию.
+                                    {{/is_auth}}
+                                    {{^is_auth}}
+                                        Авторизуйтесь, чтобы записывать и сохранять конспекты лекций.
+                                    {{/is_auth}}
+                                </p>
+                            </div>
+                        {{/has_content}}
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Bootstrap Bundle JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+        <script>
+            let isRecording = false;
+
+            function switchMode(mode) {
+                document.getElementById("btn-online").classList.toggle("active", mode === "online");
+                document.getElementById("btn-offline").classList.toggle("active", mode === "offline");
+
+                document.getElementById("status-online").style.display = mode === "online" ? "inline-flex" : "none";
+                document.getElementById("status-offline").style.display = mode === "offline" ? "inline-flex" : "none";
+                
+                const controls = document.getElementById("controls-online");
+                if (controls) controls.style.display = mode === "online" ? "block" : "none";
+            }
+
+            function toggleRecording() {
+                isRecording = !isRecording;
+
+                const btn = document.getElementById("play-stop-btn");
+                const statusBadge = document.getElementById("status-online");
+                const iconStop = document.getElementById("icon-stop");
+                const iconPlay = document.getElementById("icon-play");
+
+                if (!btn) return; // Защита, если кнопка не отрендерилась для гостя
+
+                if (isRecording) {
+                    btn.classList.remove("paused");
+                    btn.classList.add("recording");
+                    iconPlay.style.display = "none";
+                    iconStop.style.display = "block";
+
+                    statusBadge.classList.remove("status-success");
+                    statusBadge.classList.add("status-recording");
+                    statusBadge.innerHTML = "Идет запись...";
+                } else {
+                    btn.classList.remove("recording");
+                    btn.classList.add("paused");
+                    iconStop.style.display = "none";
+                    iconPlay.style.display = "block";
+
+                    statusBadge.classList.remove("status-recording");
+                    statusBadge.classList.add("status-success");
+                    statusBadge.innerHTML = "Транскрибация завершена";
+                }
+            }
+        </script>
+    </body>
+</html>

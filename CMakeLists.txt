@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.15)
+project(LectoriumAI)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Threads REQUIRED)
+find_package(PostgreSQL REQUIRED)
+find_package(PkgConfig REQUIRED)
+
+pkg_check_modules(PQXX REQUIRED libpqxx)
+
+add_executable(lectorium_app
+ main.cpp 
+ controllers/controller_login.hpp
+ controllers/main_controller.hpp
+ controllers/admin_controller.hpp
+ object_relational_mapping/code_first.hpp
+ object_relational_mapping/models.hpp
+ object_relational_mapping/repo.hpp
+ helpers/cookie_helpers.hpp
+ )
+
+target_include_directories(lectorium_app PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/controllers)
+target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/object_relational_mapping)
+target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/helpers)
+target_include_directories(lectorium_app PRIVATE ${PQXX_INCLUDE_DIRS})
+
+target_link_libraries(lectorium_app PRIVATE Threads::Threads)
+target_link_libraries(lectorium_app PRIVATE ${PQXX_LIBRARIES})
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/templates DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
