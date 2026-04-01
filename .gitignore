@@ -9,3 +9,4 @@ Makefile
 Thumbs.db
 .vscode/
 .idea/
+onnxruntime-linux-x64-*/

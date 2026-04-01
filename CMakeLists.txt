@@ -19,15 +19,26 @@ add_executable(lectorium_app
  object_relational_mapping/models.hpp
  object_relational_mapping/repo.hpp
  helpers/cookie_helpers.hpp
+ ai/silero.hpp
  )
 
 target_include_directories(lectorium_app PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(lectorium_app PRIVATE ${CMAKE_SOURCE_DIR}/onnxruntime-linux-x64-1.24.4/include/)
 target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/controllers)
 target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/object_relational_mapping)
 target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/helpers)
+target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/models_ai)
 target_include_directories(lectorium_app PRIVATE ${PQXX_INCLUDE_DIRS})
 
+target_link_directories(lectorium_app PRIVATE ${CMAKE_SOURCE_DIR}/onnxruntime-linux-x64-1.24.4/lib/)
+
+target_link_libraries(lectorium_app PRIVATE onnxruntime)
 target_link_libraries(lectorium_app PRIVATE Threads::Threads)
 target_link_libraries(lectorium_app PRIVATE ${PQXX_LIBRARIES})
+
+set_target_properties(lectorium_app PROPERTIES 
+    INSTALL_RPATH "${CMAKE_SOURCE_DIR}/onnxruntime-linux-x64-1.24.4/lib/"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/templates DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

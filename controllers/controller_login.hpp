@@ -17,6 +17,7 @@ public:
         return res;
     }
     static crow::response handle_login(const crow::request& req, const std::string& conn_str){
+        std::string body_query = "?" + req.body;
         crow::query_string params(req.body);
 
         const char* row_email = params.get("email");
@@ -40,6 +41,7 @@ public:
         
     }
     static crow::response handle_register(const crow::request& req, const std::string& db_conn) {
+        std::string body_query = "?" + req.body;
         crow::query_string params(req.body);
         
         Users newUser;
@@ -50,7 +52,7 @@ public:
         newUser.name = row_name ? row_name : "";
         newUser.login = row_email ? row_email : ""; 
         newUser.password = row_password ? row_password : "";
-
+        
         UserRepository userRepo(db_conn);
         
         if (userRepo.save(newUser)) {
