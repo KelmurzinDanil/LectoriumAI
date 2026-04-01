@@ -196,7 +196,12 @@
                     Войдите в свой аккаунт Лекторий.AI
                 </p>
             </div>
-
+            {{#has_error}}
+            <div class="alert alert-danger fade-transition text-center" 
+                 style="font-size: 14px; padding: 10px; border-radius: 8px; border: none; background-color: #fee2e2; color: #dc2626;">
+                {{error_text}}
+            </div>
+            {{/has_error}}
             <!-- ФОРМА ВХОДА -->
             <form id="login-form" class="fade-transition" action="/login" method="POST">
                 <div class="form-floating mb-3">

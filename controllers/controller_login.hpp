@@ -3,11 +3,19 @@
 #include "repo.hpp"
 class ControllerLogin{
 public:
-    static crow::response show_form() {
-        auto page = crow::mustache::load("auth.html");
-        return crow::response(page.render());
-    }
+    static crow::response show_form(const std::string& error_msg = "") {
+        crow::mustache::context ctx;
+        
+        if (!error_msg.empty()) {
+            ctx["has_error"] = true;       
+            ctx["error_text"] = error_msg; 
+        }
 
+        auto page = crow::mustache::load("auth.html");
+        crow::response res(page.render(ctx));
+        res.add_header("Content-Type", "text/html; charset=utf-8");
+        return res;
+    }
     static crow::response handle_login(const crow::request& req, const std::string& conn_str){
         crow::query_string params(req.body);
 
@@ -27,7 +35,7 @@ public:
             
             return res;
         } else {
-            return crow::response(400, "Неверный логин или пароль");
+            return show_form("Неверный логин или пароль. Попробуйте еще раз.");
         }
         
     }
@@ -50,7 +58,7 @@ public:
             res.add_header("Location", "/auth#login"); 
             return res;
         } else {
-            return crow::response(400, "Такой пользователь уже существует");
+            return show_form("Такой Email уже зарегистрирован в системе.");
         }
     }
 };

@@ -75,9 +75,43 @@ int main() {
         } catch (...) {
             return crow::response(400, "Ошибка чтения куки");
         }
-        
 
     });
+    CROW_ROUTE(app, "/history/filter")([&db_conn](const crow::request& req){
+        std::string userIdStr = get_cookie_value(req, "user_id");
+        if (userIdStr.empty()) {
+            return crow::response(302, "/auth");
+        }
+
+        try {
+            UserRepository userRepo(db_conn);
+            auto user_opt = userRepo.getById(std::stoi(userIdStr));
+
+            if (user_opt) {
+                char* limit_param = req.url_params.get("limit");
+                
+
+                int limit = 5; 
+                
+                if (limit_param) {
+                    try {
+                        limit = std::stoi(limit_param); 
+                        if (limit <= 0) limit = 5;     
+                        if (limit > 50) limit = 50;     
+                    } catch (...) {
+                        
+                    }
+                }
+
+                return MainController::filter_history(*user_opt, limit, db_conn);
+            }
+        } catch (...) {
+            return crow::response(400, "Ошибка сессии");
+        }
+
+        return crow::response(302, "/auth");
+    });
+
     CROW_ROUTE(app, "/login").methods(crow::HTTPMethod::POST)([&db_conn](const crow::request& req){
         return ControllerLogin::handle_login(req, db_conn);
     });

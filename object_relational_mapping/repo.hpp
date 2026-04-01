@@ -39,6 +39,26 @@ class HistoryRepository {
         
             return records;
         }
+        std::vector<History> getUserHistoryWithLimit(int userId, int limit) {
+            pqxx::connection C(conn_str);
+            pqxx::work W(C);
+
+            pqxx::result R = W.exec_params(R"(
+                                    SELECT id_user, title, content, created_at 
+                                    FROM history WHERE id_user = $1 ORDER BY created_at DESC LIMIT = $2)", userId, limit);
+
+            std::vector<History> records;
+            for(auto row: R){
+                records.push_back({
+                    row[0].as<int>(),
+                    row[1].as<int>(),
+                    row[2].as<std::string>(),
+                    row[3].as<std::string>(),
+                    row[4].as<std::string>()
+                });
+            }
+            return records;
+        }
 };
 
 class UserRepository{

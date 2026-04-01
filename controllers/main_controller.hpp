@@ -29,4 +29,25 @@ public:
         auto page = crow::mustache::load("index.html");
         return crow::response(page.render(ctx));
     }
+
+    static crow::response filter_history(const Users& user, int limit, const std::string& db_conn) {
+            crow::mustache::context ctx;
+            
+            ctx["is_auth"] = true;
+            ctx["user_name"] = user.name;
+            ctx["user_role"] = user.role;
+
+            HistoryRepository historyRepo(db_conn);
+            auto history = historyRepo.getUserHistoryWithLimit(user.id, limit);
+
+            for (size_t i = 0; i < history.size(); i++) {
+                ctx["user_history"][i]["title"] = history[i].title;
+                ctx["user_history"][i]["id_history"] = history[i].id_history;
+            }
+
+            ctx["has_content"] = false; 
+            ctx["filter_message"] = "Показано последних записей: " + std::to_string(limit);
+
+            return crow::mustache::load("index.html").render(ctx);
+    }
 };
