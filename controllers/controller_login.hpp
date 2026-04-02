@@ -18,7 +18,7 @@ public:
     }
     static crow::response handle_login(const crow::request& req, const std::string& conn_str){
         std::string body_query = "?" + req.body;
-        crow::query_string params(req.body);
+        crow::query_string params(body_query);
 
         const char* row_email = params.get("email");
         const char* row_password = params.get("password");
@@ -42,7 +42,7 @@ public:
     }
     static crow::response handle_register(const crow::request& req, const std::string& db_conn) {
         std::string body_query = "?" + req.body;
-        crow::query_string params(req.body);
+        crow::query_string params(body_query);
         
         Users newUser;
         const char* row_name = params.get("name");
