@@ -10,3 +10,5 @@ Thumbs.db
 .vscode/
 .idea/
 onnxruntime-linux-x64-*/
+vendor/whisper/whisper.cpp/
+download-ggml-model.sh

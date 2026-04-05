@@ -1,3 +1,9 @@
+#include <atomic>
+#include <memory>
+#include <thread>
+#include <unordered_set>
+#include <mutex>
+
 #include "crow_all.h"
 #include "main_controller.hpp"
 #include "controller_login.hpp"
@@ -6,12 +12,19 @@
 #include "cookie_helpers.hpp"
 #include "models.hpp"
 #include "silero.hpp"
+#include "whisper.h"
+
+whisper_context* g_whisper_ctx = whisper_init_from_file_with_params("models/ggml-small.bin", whisper_context_default_params());
+
+std::unordered_set<crow::websocket::connection*> g_active_connections;
+std::mutex g_connections_mtx;
 
 struct AudioSession {
     std::vector<float> accumulation_buffer;
     std::vector<float> speech_to_transcribe;
     int silence_counter = 0;
 
+    std::shared_ptr<std::atomic<bool>> is_alive;
     SileroVAD personal_vad{"models_ai/silero_vad.onnx"};
 };
 
@@ -125,8 +138,13 @@ int main() {
         .websocket()
         .onopen([&](crow::websocket::connection& conn) {
         CROW_LOG_INFO << "Новое соединение для аудио";
+
+        {
+            std::lock_guard<std::mutex> lock(g_connections_mtx);
+            g_active_connections.insert(&conn);
+        }
+
         AudioSession* audio_session = new AudioSession();
-        // audio_session -> personal_vad.reset_states();
         conn.userdata(audio_session);
         })
         .onmessage([&](crow::websocket::connection& conn, const std::string& data, bool is_binary) {
@@ -168,11 +186,41 @@ int main() {
                     session_ptr->silence_counter++;
                     if (session_ptr->silence_counter > 20 && !session_ptr->speech_to_transcribe.empty()) {
                         
-                        conn.send_text("{\"status\": \"done\"}");
+                        std::vector<float> audio_to_process = session_ptr->speech_to_transcribe;
+                        crow::websocket::connection* conn_ptr = &conn;                   
                         
                         session_ptr->speech_to_transcribe.clear();
                         session_ptr->silence_counter = 0;
                         session_ptr->personal_vad.reset_states();
+
+                        std::thread([audio_to_process, conn_ptr](){
+                            whisper_state* wstate = whisper_init_state(g_whisper_ctx);
+
+                            whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+                            wparams.language  = "ru"; 
+                            wparams.n_threads = 4;
+                            wparams.print_progress = false;
+
+                            if (whisper_full_with_state(g_whisper_ctx, wstate, wparams, audio_to_process.data(),
+                             audio_to_process.size()) == 0){
+                                std::string result_text = "";
+                                int n_segments = whisper_full_n_segments_from_state(wstate);
+                                for (int i = 0; i < n_segments; ++i) {
+                                    result_text += whisper_full_get_segment_text_from_state(wstate, i);
+                                }
+
+                                std::string json = "{\"status\": \"done\", \"text\": \"" + result_text + "\"}";
+                                {
+                                    std::lock_guard<std::mutex> lock(g_connections_mtx);
+                                    if (g_active_connections.find(conn_ptr) != g_active_connections.end()) {
+                                        conn_ptr->send_text(json); 
+                                    } else {
+                                        //Ничего не делаем.
+                                    }
+                                }
+                            } 
+                            whisper_free_state(wstate);
+                        }).detach();
                     }
                 }
                 
@@ -180,6 +228,10 @@ int main() {
         })
         .onclose([&](crow::websocket::connection& conn, const std::string& reason) {
         CROW_LOG_INFO << "Соединение закрыто";
+        {
+            std::lock_guard<std::mutex> lock(g_connections_mtx);
+            g_active_connections.erase(&conn);
+        }
 
         AudioSession* session_ptr = static_cast<AudioSession*>(conn.userdata());
         if (session_ptr) {

@@ -10,6 +10,12 @@ find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(PQXX REQUIRED libpqxx)
 
+set(WHISPER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(WHISPER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(WHISPER_BUILD_SERVER OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(vendor/whisper/whisper.cpp)
+
 add_executable(lectorium_app
  main.cpp 
  controllers/controller_login.hpp
@@ -20,6 +26,7 @@ add_executable(lectorium_app
  object_relational_mapping/repo.hpp
  helpers/cookie_helpers.hpp
  ai/silero.hpp
+
  )
 
 target_include_directories(lectorium_app PRIVATE ${CMAKE_SOURCE_DIR}/include)
@@ -30,10 +37,15 @@ target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/hel
 target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/models_ai)
 target_include_directories(lectorium_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ai)
 target_include_directories(lectorium_app PRIVATE ${PQXX_INCLUDE_DIRS})
+target_include_directories(lectorium_app PRIVATE 
+    vendor/whisper/whisper.cpp/include
+    vendor/whisper/whisper.cpp/ggml/include
+)
 
 target_link_directories(lectorium_app PRIVATE ${CMAKE_SOURCE_DIR}/onnxruntime-linux-x64-1.24.4/lib/)
 
 target_link_libraries(lectorium_app PRIVATE onnxruntime)
+target_link_libraries(lectorium_app PRIVATE whisper)
 target_link_libraries(lectorium_app PRIVATE Threads::Threads)
 target_link_libraries(lectorium_app PRIVATE ${PQXX_LIBRARIES})
 
@@ -44,3 +56,7 @@ set_target_properties(lectorium_app PROPERTIES
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/templates DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models_ai DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
