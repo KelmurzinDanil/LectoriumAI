@@ -13,8 +13,10 @@ pkg_check_modules(PQXX REQUIRED libpqxx)
 set(WHISPER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(WHISPER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(WHISPER_BUILD_SERVER OFF CACHE BOOL "" FORCE)
+set(WHISPER_STATIC ON CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE) 
 
-add_subdirectory(vendor/whisper/whisper.cpp)
+add_subdirectory(vendor/whisper/whisper.cpp build_whisper)
 
 add_executable(lectorium_app
  main.cpp 

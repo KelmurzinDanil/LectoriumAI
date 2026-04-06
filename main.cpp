@@ -14,7 +14,7 @@
 #include "silero.hpp"
 #include "whisper.h"
 
-whisper_context* g_whisper_ctx = whisper_init_from_file_with_params("models/ggml-small.bin", whisper_context_default_params());
+whisper_context* g_whisper_ctx = nullptr; 
 
 std::unordered_set<crow::websocket::connection*> g_active_connections;
 std::mutex g_connections_mtx;
@@ -30,6 +30,9 @@ struct AudioSession {
 
 
 int main() {
+
+    g_whisper_ctx = whisper_init_from_file_with_params("models_ai/ggml-small-q5_1.bin", whisper_context_default_params());
+    
     std::string db_conn = "host=localhost port=5433 dbname=LectoriumDB user=devuser password=devpassword";
     DatabseManger::init(db_conn);
 

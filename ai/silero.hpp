@@ -20,12 +20,13 @@ class SileroVAD{
         std::vector<const char*> input_node_names = {"input", "state", "sr"};
         std::vector<const char*> output_node_names = {"output", "stateN"};
 
-        const int64_t input_node_dims[2] = {1, 512};   // [1 батч, 512 семплов]
+        const int64_t input_node_dims[2] = {1, 576};   // [1 батч, 576 семплов]
         const int64_t state_node_dims[3] = {2, 1, 128}; // [2 слоя, 1 батч, 128 фичей]
         const int64_t sr_node_dims[1] = {1};           // Одно число
 
         std::vector<float> _state;
         std::vector<int64_t> sr;
+        std::vector<float> _context;
         const unsigned int size_state = 2 * 1 * 128; 
 
     public:
@@ -40,6 +41,8 @@ class SileroVAD{
             _state.resize(size_state, 0.0f); 
             sr = {16000};
 
+            _context.assign(64, 0.0f);
+
             try {
                 session = std::make_shared<Ort::Session>(env, model_path.c_str(), session_options);
                 std::cout << "[SileroVAD] Модель успешно загружена: " << model_path << std::endl;
@@ -53,10 +56,20 @@ class SileroVAD{
 
         // принимает 512 float, возвращает от 0.0 до 1.0
         float predict(const std::vector<float>& data_chunk){
+
+            std::vector<float> input_with_context;
+            input_with_context.reserve(576);
+
+            // 64 старых семпла
+            input_with_context.insert(input_with_context.end(), _context.begin(), _context.end());
+
+            // 512 новых семплов
+            input_with_context.insert(input_with_context.end(), data_chunk.begin(), data_chunk.end());
+
             Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
                                                 memory_info, 
-                                                const_cast<float*>(data_chunk.data()),
-                                                data_chunk.size(),
+                                                input_with_context.data(),
+                                                input_with_context.size(),
                                                 input_node_dims, 2);
 
             Ort::Value state_tensor = Ort::Value::CreateTensor<float>(
@@ -86,10 +99,14 @@ class SileroVAD{
             float* stateN = ort_outputs[1].GetTensorMutableData<float>();
             std::memcpy(_state.data(), stateN, size_state * sizeof(float));
 
+            _context.assign(data_chunk.end() - 64, data_chunk.end());
+
             return speech_prob; 
         }
 
         void reset_states(){
             std::fill(_state.begin(), _state.end(), 0.0f);
+
+            std::fill(_context.begin(), _context.end(), 0.0f);
         }
 };

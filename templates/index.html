@@ -28,7 +28,7 @@
             body {
                 font-family: "Inter", sans-serif;
                 background-color: var(--bg-app);
-                overflow: hidden;
+                overflow-x: hidden;
             }
 
             /* --- Боковая панель (История) --- */
@@ -214,6 +214,16 @@
                 color: #374151;
             }
 
+            /* Анимация появления текста */
+            .fade-in-text {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
             @media (max-width: 768px) {
                 .canvas {
                     padding: 20px;
@@ -285,7 +295,7 @@
         </div>
 
         <!-- Основная рабочая область -->
-        <div class="main-content flex-grow-1 d-flex flex-column w-100">
+        <div class="main-content flex-grow-1 d-flex flex-column w-100" id="scroll-container">
             <!-- Шапка (Header) -->
             <header class="d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
                 <div class="d-flex align-items-center gap-3">
@@ -361,16 +371,18 @@
 
                 <!-- Холст / Текст лекции -->
                 <div class="container-fluid py-4 mb-5" style="max-width: 800px">
-                    <div class="canvas">
+                    <div id="canvas-container" class="canvas">
+                        
+                        <!-- БЛОК С ТЕКСТОМ ЛЕКЦИИ -->
+                        <!-- Если загружаем старую лекцию, тут будет текст. Если новая - он создастся JS-ом -->
                         {{#has_content}}
-                            <!-- Если мы открыли сохраненную лекцию -->
-                            <h1 class="h3 fw-bold mb-4">{{current_title}}</h1>
-                            <div class="content-text" style="white-space: pre-wrap;">{{current_content}}</div>
+                            <h1 class="h3 fw-bold mb-4" id="lecture-title">{{current_title}}</h1>
+                            <div id="transcription-content" class="content-text" style="white-space: pre-wrap;">{{current_content}}</div>
                         {{/has_content}}
 
                         {{^has_content}}
-                            <!-- Дефолтное окно приветствия -->
-                            <div class="text-center py-5 mt-5">
+                            <!-- Дефолтное окно приветствия (Скроется при первом распознавании) -->
+                            <div id="welcome-screen" class="text-center py-5 mt-5">
                                 <div class="mb-4">
                                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -405,7 +417,6 @@
             let processor = null;
             let source = null;
 
-            // Функция переключения вкладок (Онлайн / Загрузка)
             function switchMode(mode) {
                 document.getElementById("btn-online").classList.toggle("active", mode === "online");
                 document.getElementById("btn-offline").classList.toggle("active", mode === "offline");
@@ -417,19 +428,17 @@
                 if (controls) controls.style.display = mode === "online" ? "block" : "none";
             }
 
-            // Главная функция кнопки
             async function toggleRecording() {
                 const btn = document.getElementById("play-stop-btn");
                 const statusBadge = document.getElementById("status-online");
                 const iconStop = document.getElementById("icon-stop");
                 const iconPlay = document.getElementById("icon-play");
 
-                if (!btn) return; // Защита для неавторизованных
+                if (!btn) return; 
 
                 isRecording = !isRecording;
 
                 if (isRecording) {
-                    // --- UI: Включаем запись ---
                     btn.classList.remove("paused");
                     btn.classList.add("recording");
                     iconPlay.style.display = "none";
@@ -438,18 +447,15 @@
                     statusBadge.classList.add("status-recording");
                     statusBadge.innerHTML = "Подключение...";
 
-                    // --- ЛОГИКА: Запуск стриминга ---
                     try {
                         await startStreaming(statusBadge);
                     } catch (err) {
-                        console.error("Ошибка инициализации микрофона:", err);
+                        console.error("Ошибка микрофона:", err);
                         alert("Не удалось получить доступ к микрофону. Проверьте разрешения браузера.");
-                        // Откатываем UI назад, если юзер не дал микрофон
                         toggleRecording(); 
                     }
 
                 } else {
-                    // --- UI: Останавливаем запись ---
                     btn.classList.remove("recording");
                     btn.classList.add("paused");
                     iconStop.style.display = "none";
@@ -458,91 +464,94 @@
                     statusBadge.classList.add("status-success");
                     statusBadge.innerHTML = "Остановлено";
 
-                    // --- ЛОГИКА: Остановка стриминга ---
                     stopStreaming();
                 }
             }
 
             async function startStreaming(statusBadge) {
-                // 1. Открываем WebSocket соединение (ws:// если http, wss:// если https)
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const wsUrl = `${protocol}//${window.location.host}/ws/audio`;
                 socket = new WebSocket(wsUrl);
 
                 socket.onopen = () => {
                     statusBadge.innerHTML = "Слушаю...";
-                    console.log("WebSocket соединен!");
                 };
 
-                // Получаем ответы от C++ сервера
+                // ===== ЛОГИКА ОТОБРАЖЕНИЯ ТЕКСТА НА ХОЛСТЕ =====
                 socket.onmessage = (event) => {
                     try {
                         const response = JSON.parse(event.data);
-                        if (response.status === "done") {
-                            console.log(`Фраза завершена! Длина: ${response.seconds} сек.`);
-                            // Здесь позже добавим логику вставки текста на холст
+                        
+                        if (response.status === "done" && response.text) {
+                            
+                            // 1. Скрываем окно приветствия, если оно еще есть
+                            const welcomeScreen = document.getElementById('welcome-screen');
+                            if (welcomeScreen) {
+                                welcomeScreen.style.display = 'none';
+                            }
+
+                            // 2. Ищем или создаем контейнер для текста лекции
+                            let transBox = document.getElementById('transcription-content');
+                            if (!transBox) {
+                                transBox = document.createElement('div');
+                                transBox.id = 'transcription-content';
+                                transBox.className = 'content-text';
+                                transBox.style.whiteSpace = 'pre-wrap';
+                                document.getElementById('canvas-container').appendChild(transBox);
+                            }
+
+                            // 3. Создаем новый элемент (span) для анимации появления кусочка фразы
+                            const newPhrase = document.createElement('span');
+                            newPhrase.className = 'fade-in-text';
+                            
+                            // Whisper иногда не ставит пробел в начале фразы, поэтому добавим его
+                            let textToAppend = response.text;
+                            if (!textToAppend.startsWith(" ")) textToAppend = " " + textToAppend;
+                            
+                            newPhrase.textContent = textToAppend;
+                            
+                            // Добавляем фразу на холст
+                            transBox.appendChild(newPhrase);
+
+                            // 4. Плавно прокручиваем страницу вниз, чтобы всегда видеть новый текст
+                            const scrollContainer = document.getElementById('scroll-container');
+                            scrollContainer.scrollTo({
+                                top: scrollContainer.scrollHeight,
+                                behavior: 'smooth'
+                            });
                         }
                     } catch (e) {
-                        console.error("Ошибка парсинга ответа от сервера", e);
+                        console.error("Ошибка парсинга JSON от сервера", e);
                     }
                 };
+                // ===============================================
 
-                // 2. Запрашиваем доступ к микрофону
                 mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        noiseSuppression: true, // Включаем базовое шумоподавление браузера
-                        echoCancellation: true
-                    } 
+                    audio: { noiseSuppression: true, echoCancellation: true } 
                 });
 
-                // 3. Создаем аудио-контекст. ЖЕСТКО ЗАДАЕМ 16000 Hz для Silero VAD и Whisper
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 audioContext = new AudioContextClass({ sampleRate: 16000 });
-
                 source = audioContext.createMediaStreamSource(mediaStream);
-
-                // 4. Создаем процессор (размер буфера 4096 семплов, 1 вход, 1 выход)
                 processor = audioContext.createScriptProcessor(4096, 1, 1);
 
-                // 5. Функция, которая вызывается каждый раз, когда буфер (4096 семплов) заполняется
                 processor.onaudioprocess = (e) => {
                     if (socket && socket.readyState === WebSocket.OPEN) {
-                        // Извлекаем чистые данные (Float32Array) из моно-канала
                         const pcmFloat32 = e.inputBuffer.getChannelData(0);
-                        
-                        // Отправляем сырые байты (buffer) прямо на сервер C++
                         socket.send(pcmFloat32.buffer);
                     }
                 };
 
-                // 6. Подключаем граф аудио: Микрофон -> Процессор -> Динамики (заглушка)
                 source.connect(processor);
                 processor.connect(audioContext.destination);
             }
 
             function stopStreaming() {
-                // Аккуратно закрываем и удаляем всё, чтобы не было утечек памяти в браузере
-                if (processor) {
-                    processor.disconnect();
-                    processor = null;
-                }
-                if (source) {
-                    source.disconnect();
-                    source = null;
-                }
-                if (mediaStream) {
-                    mediaStream.getTracks().forEach(track => track.stop());
-                    mediaStream = null;
-                }
-                if (audioContext) {
-                    audioContext.close();
-                    audioContext = null;
-                }
-                if (socket) {
-                    socket.close();
-                    socket = null;
-                }
-                console.log("Стриминг остановлен.");
+                if (processor) { processor.disconnect(); processor = null; }
+                if (source) { source.disconnect(); source = null; }
+                if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; }
+                if (audioContext) { audioContext.close(); audioContext = null; }
+                if (socket) { socket.close(); socket = null; }
             }
         </script>
     </body>
