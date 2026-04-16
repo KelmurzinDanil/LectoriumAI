@@ -156,7 +156,6 @@
         </style>
     </head>
     <body>
-        <!-- Ссылка назад на главную -->
         <a href="/" class="btn-back">
             <svg
                 width="20"
@@ -273,7 +272,6 @@
                     >
                 </div>
 
-                <!-- После успешного входа возвращаем на index.html -->
                 <button
                     type="submit"
                     class="btn btn-primary w-100 mb-4 d-block text-center text-white text-decoration-none"
@@ -292,7 +290,6 @@
                 </div>
             </form>
 
-            <!-- ФОРМА РЕГИСТРАЦИИ -->
             <form
                 id="register-form"
                 class="fade-transition"
@@ -358,7 +355,6 @@
                     </button>
                 </div>
 
-                <!-- После успешной регистрации возвращаем на index.html -->
                 <button
                     type="submit"
                     class="btn btn-primary w-100 mb-4 mt-2 d-block text-center text-white text-decoration-none"
@@ -379,9 +375,7 @@
         </div>
 
         <script>
-            // При загрузке страницы проверяем URL
             document.addEventListener("DOMContentLoaded", function () {
-                // Если в ссылке указано #register (например, при переходе с главной страницы)
                 if (window.location.hash === "#register") {
                     switchForm("register");
                 } else {
@@ -401,7 +395,7 @@
                     formTitle.textContent = "Создать аккаунт";
                     formSubtitle.textContent = "Присоединяйтесь к Лекторий.AI";
                     document.title = "Регистрация — Лекторий.AI";
-                    window.history.replaceState(null, null, "#register"); // Меняем URL без перезагрузки
+                    window.history.replaceState(null, null, "#register"); 
                 } else {
                     registerForm.style.display = "none";
                     loginForm.style.display = "block";
@@ -409,7 +403,7 @@
                     formSubtitle.textContent =
                         "Войдите в свой аккаунт Лекторий.AI";
                     document.title = "Вход — Лекторий.AI";
-                    window.history.replaceState(null, null, "#login"); // Меняем URL без перезагрузки
+                    window.history.replaceState(null, null, "#login"); 
                 }
             }
 

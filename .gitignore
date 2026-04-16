@@ -3,6 +3,7 @@ out/
 bin/
 CMakeCache.txt
 CMakeFiles/
+models_ai/
 cmake_install.cmake
 Makefile
 .DS_Store
@@ -10,5 +11,5 @@ Thumbs.db
 .vscode/
 .idea/
 onnxruntime-linux-x64-*/
-vendor/whisper/whisper.cpp/
+vendor/
 download-ggml-model.sh

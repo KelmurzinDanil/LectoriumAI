@@ -5,7 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Лекторий.AI</title>
 
-        <!-- Подключаем Bootstrap 5 -->
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
             rel="stylesheet"
@@ -14,7 +13,12 @@
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         />
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+        
         <style>
             :root {
                 --bg-app: #f4f5f7;
@@ -31,7 +35,6 @@
                 overflow-x: hidden;
             }
 
-            /* --- Боковая панель (История) --- */
             .sidebar {
                 background-color: var(--bg-sidebar) !important;
                 --bs-offcanvas-bg: var(--bg-sidebar);
@@ -90,7 +93,6 @@
                 color: #ffffff;
             }
 
-            /* --- Основная область --- */
             .main-content {
                 height: 100vh;
                 overflow-y: auto;
@@ -114,7 +116,6 @@
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
 
-            /* --- Плавающая/закрепленная панель (Sticky Bar) --- */
             .sticky-actions {
                 position: sticky;
                 top: 0;
@@ -214,7 +215,6 @@
                 color: #374151;
             }
 
-            /* Анимация появления текста */
             .fade-in-text {
                 animation: fadeIn 0.5s ease-in-out;
             }
@@ -240,7 +240,7 @@
         </style>
     </head>
     <body class="d-flex">
-        <!-- Боковая панель (Сайдбар) -->
+
         <div
             class="offcanvas-md offcanvas-start sidebar d-flex flex-column flex-shrink-0"
             tabindex="-1"
@@ -254,13 +254,13 @@
                         </svg>
                         Лекторий.AI
                     </div>
-                    <!-- Крестик закрытия меню для мобильных телефонов -->
+
                     <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
                 </div>
 
                 {{#is_auth}}
-                <!-- Кнопка "Новый конспект" доступна только авторизованным -->
-                <button class="btn btn-new-chat w-100 d-flex align-items-center justify-content-center gap-2">
+
+                <button onclick="window.location.href='/'" class="btn btn-new-chat w-100 d-flex align-items-center justify-content-center gap-2">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -270,7 +270,7 @@
                 {{/is_auth}}
             </div>
 
-            <!-- ИСТОРИЯ КОНСПЕКТОВ -->
+
             <div class="history-list px-3 pb-4 flex-grow-1">
                 {{#is_auth}}
                     <div class="history-group-title mt-2 mb-2">Ваши записи</div>
@@ -294,9 +294,9 @@
             </div>
         </div>
 
-        <!-- Основная рабочая область -->
+
         <div class="main-content flex-grow-1 d-flex flex-column w-100" id="scroll-container">
-            <!-- Шапка (Header) -->
+
             <header class="d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
                 <div class="d-flex align-items-center gap-3">
                     <button class="btn btn-light d-md-none border" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
@@ -313,7 +313,7 @@
                     </div>
                 </div>
 
-                <!-- БЛОК АВТОРИЗАЦИИ / ПРОФИЛЯ -->
+
                 <div class="d-none d-sm-flex align-items-center gap-3">
                     {{#is_auth}}
                         <div class="text-end">
@@ -330,58 +330,76 @@
                 </div>
             </header>
 
-            <!-- Контент с текстом -->
+
             <main class="flex-grow-1 position-relative">
-                <!-- ЗАКРЕПЛЕННАЯ ПАНЕЛЬ (Кнопки записи) -->
+
                 <div class="sticky-actions px-3 px-md-4">
                     <div class="container-fluid max-w-800 mx-auto p-0 d-flex justify-content-between align-items-center" style="max-width: 800px">
                         
                         {{#is_auth}}
-                            <div id="status-online" class="status-badge status-recording">Ожидание...</div>
-                            <div id="status-offline" class="status-badge status-success" style="display: none">Готово к загрузке</div>
 
-                            <div id="controls-online">
-                                <button id="play-stop-btn" class="btn-record paused" onclick="toggleRecording()" title="Начать/Остановить запись">
-                                    <svg id="icon-stop" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none">
-                                        <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
-                                    </svg>
-                                    <svg id="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                    </svg>
-                                </button>
+                            <div style="min-width: 140px;">
+                                <div id="status-online" class="status-badge status-success">Остановлено</div>
+                                <div id="status-offline" class="status-badge status-success" style="display: none">Готово к загрузке</div>
                             </div>
 
-                            <button class="btn btn-outline-secondary bg-white d-flex align-items-center gap-2 rounded-3 fw-medium shadow-sm">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                <span class="d-none d-sm-inline">Сохранить</span>
-                            </button>
+
+                            <div class="d-flex justify-content-center flex-grow-1 mx-2">
+                                <div id="controls-online">
+                                    <button id="play-stop-btn" class="btn-record paused" onclick="toggleRecording()" title="Начать/Остановить запись">
+                                        <svg id="icon-stop" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none">
+                                            <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
+                                        </svg>
+                                        <svg id="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div id="controls-offline" style="display: none;" class="align-items-center gap-2">
+                                    <input type="file" id="audio-file-input" accept="audio/*" class="form-control form-control-sm" style="width: 300px; border-radius: 8px;">
+                                    <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" style="border-radius: 8px; padding: 8px 16px;" onclick="uploadAndProcessAudio()" id="btn-process-audio">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        <span>Распознать</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="min-width: 140px;" class="d-flex justify-content-end">
+                                <button id="btn-save-lecture" onclick="saveLecture()" class="btn btn-outline-secondary bg-white d-flex align-items-center gap-2 rounded-3 fw-medium shadow-sm">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    <span class="d-none d-sm-inline">Сохранить</span>
+                                </button>
+                            </div>
                         {{/is_auth}}
                         
                         {{^is_auth}}
                             <div class="w-100 text-center text-muted fw-medium py-2">
-                                Для начала работы с микрофоном необходимо авторизоваться
+                                Для начала работы необходимо авторизоваться
                             </div>
                         {{/is_auth}}
                     </div>
                 </div>
 
-                <!-- Холст / Текст лекции -->
                 <div class="container-fluid py-4 mb-5" style="max-width: 800px">
                     <div id="canvas-container" class="canvas">
                         
-                        <!-- БЛОК С ТЕКСТОМ ЛЕКЦИИ -->
-                        <!-- Если загружаем старую лекцию, тут будет текст. Если новая - он создастся JS-ом -->
                         {{#has_content}}
+                            <input type="hidden" id="current_history_id" value="{{current_id}}">
+                        
                             <h1 class="h3 fw-bold mb-4" id="lecture-title">{{current_title}}</h1>
-                            <div id="transcription-content" class="content-text" style="white-space: pre-wrap;">{{current_content}}</div>
+                            <div id="transcription-content" class="content-text" style="white-space: pre-wrap;">{{{current_content}}}</div>
                         {{/has_content}}
 
                         {{^has_content}}
-                            <!-- Дефолтное окно приветствия (Скроется при первом распознавании) -->
                             <div id="welcome-screen" class="text-center py-5 mt-5">
                                 <div class="mb-4">
                                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -404,13 +422,11 @@
             </main>
         </div>
 
-        <!-- Bootstrap Bundle JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
             let isRecording = false;
 
-            // Глобальные переменные для аудио и сокета
             let socket = null;
             let audioContext = null;
             let mediaStream = null;
@@ -418,15 +434,23 @@
             let source = null;
 
             function switchMode(mode) {
-                document.getElementById("btn-online").classList.toggle("active", mode === "online");
-                document.getElementById("btn-offline").classList.toggle("active", mode === "offline");
+            document.getElementById("btn-online").classList.toggle("active", mode === "online");
+            document.getElementById("btn-offline").classList.toggle("active", mode === "offline");
 
-                document.getElementById("status-online").style.display = mode === "online" ? "inline-flex" : "none";
-                document.getElementById("status-offline").style.display = mode === "offline" ? "inline-flex" : "none";
-                
-                const controls = document.getElementById("controls-online");
-                if (controls) controls.style.display = mode === "online" ? "block" : "none";
+            document.getElementById("status-online").style.display = mode === "online" ? "inline-flex" : "none";
+            document.getElementById("status-offline").style.display = mode === "offline" ? "inline-flex" : "none";
+            
+            const controlsOnline = document.getElementById("controls-online");
+            const controlsOffline = document.getElementById("controls-offline");
+            
+            if (mode === "online") {
+                controlsOnline.style.display = "block";
+                controlsOffline.style.display = "none";
+            } else {
+                controlsOnline.style.display = "none";
+                controlsOffline.style.display = "flex"; 
             }
+        }
 
             async function toggleRecording() {
                 const btn = document.getElementById("play-stop-btn");
@@ -477,54 +501,50 @@
                     statusBadge.innerHTML = "Слушаю...";
                 };
 
-                // ===== ЛОГИКА ОТОБРАЖЕНИЯ ТЕКСТА НА ХОЛСТЕ =====
                 socket.onmessage = (event) => {
                     try {
                         const response = JSON.parse(event.data);
                         
-                        if (response.status === "done" && response.text) {
+                        if (response.status === "done" && response.text && response.text.trim() !== "ПУСТО") {
                             
-                            // 1. Скрываем окно приветствия, если оно еще есть
                             const welcomeScreen = document.getElementById('welcome-screen');
-                            if (welcomeScreen) {
-                                welcomeScreen.style.display = 'none';
-                            }
+                            if (welcomeScreen) welcomeScreen.style.display = 'none';
 
-                            // 2. Ищем или создаем контейнер для текста лекции
                             let transBox = document.getElementById('transcription-content');
                             if (!transBox) {
                                 transBox = document.createElement('div');
                                 transBox.id = 'transcription-content';
                                 transBox.className = 'content-text';
-                                transBox.style.whiteSpace = 'pre-wrap';
                                 document.getElementById('canvas-container').appendChild(transBox);
                             }
 
-                            // 3. Создаем новый элемент (span) для анимации появления кусочка фразы
-                            const newPhrase = document.createElement('span');
-                            newPhrase.className = 'fade-in-text';
+                            const newPhrase = document.createElement('div');
+                            newPhrase.className = 'fade-in-text mb-3'; 
                             
-                            // Whisper иногда не ставит пробел в начале фразы, поэтому добавим его
-                            let textToAppend = response.text;
-                            if (!textToAppend.startsWith(" ")) textToAppend = " " + textToAppend;
-                            
-                            newPhrase.textContent = textToAppend;
-                            
-                            // Добавляем фразу на холст
+                            newPhrase.innerHTML = response.text;
                             transBox.appendChild(newPhrase);
 
-                            // 4. Плавно прокручиваем страницу вниз, чтобы всегда видеть новый текст
-                            const scrollContainer = document.getElementById('scroll-container');
-                            scrollContainer.scrollTo({
-                                top: scrollContainer.scrollHeight,
-                                behavior: 'smooth'
+                            newPhrase.innerHTML = marked.parse(newPhrase.innerHTML);
+
+                            renderMathInElement(newPhrase, {
+                                delimiters: [
+                                    {left: "$$", right: "$$", display: true},
+                                    {left: "$", right: "$", display: false},
+                                    {left: "\\(", right: "\\)", display: false},
+                                    {left: "\\[", right: "\\]", display: true}
+                                ],
+                                throwOnError: false 
                             });
+
+
+                            const scrollContainer = document.getElementById('scroll-container');
+                            scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
                         }
                     } catch (e) {
-                        console.error("Ошибка парсинга JSON от сервера", e);
+                        console.error("Ошибка парсинга", e);
                     }
                 };
-                // ===============================================
+                
 
                 mediaStream = await navigator.mediaDevices.getUserMedia({ 
                     audio: { noiseSuppression: true, echoCancellation: true } 
@@ -553,6 +573,179 @@
                 if (audioContext) { audioContext.close(); audioContext = null; }
                 if (socket) { socket.close(); socket = null; }
             }
+
+            async function saveLecture() {
+                const transBox = document.getElementById('transcription-content');
+                if (!transBox || transBox.innerText.trim() === '') {
+                    alert("Нет текста для сохранения!"); return;
+                }
+
+                const contentHTML = transBox.innerHTML;
+                const now = new Date();
+                const defaultTitle = "Конспект от " + now.toLocaleDateString("ru-RU") + ", " + now.toLocaleTimeString("ru-RU", {hour: '2-digit', minute:'2-digit'});
+
+                const titleEl = document.getElementById('lecture-title');
+                const finalTitle = titleEl ? titleEl.innerText : defaultTitle;
+
+                const payload = {
+                    title: finalTitle,
+                    content: contentHTML
+                };
+
+                const hiddenIdEl = document.getElementById('current_history_id');
+                if (hiddenIdEl && hiddenIdEl.value) {
+                    payload.id_history = parseInt(hiddenIdEl.value);
+                }
+
+                const btnSave = document.getElementById('btn-save-lecture');
+                const originalContent = btnSave.innerHTML;
+                btnSave.innerHTML = "Сохранение..."; btnSave.disabled = true;
+
+                try {
+                    const response = await fetch('/api/history/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload) 
+                    });
+
+                    if (response.status === 401) {
+                        window.location.href = "/auth"; return;
+                    }
+                    if (response.ok) {
+                        btnSave.innerHTML = "✓ Сохранено";
+                        setTimeout(() => { window.location.reload(); }, 500); 
+                    } else {
+                        alert("Ошибка при сохранении.");
+                    }
+                } catch (err) {
+                    console.error("Ошибка запроса:", err);
+                } finally {
+                    setTimeout(() => { btnSave.innerHTML = originalContent; btnSave.disabled = false; }, 2000);
+                }
+            }
+
+            async function uploadAndProcessAudio() {
+                const fileInput = document.getElementById('audio-file-input');
+                const btnProcess = document.getElementById('btn-process-audio');
+                const statusBadge = document.getElementById("status-offline");
+                const welcomeScreen = document.getElementById('welcome-screen');
+                
+                if (!fileInput.files.length) {
+                    alert("Пожалуйста, выберите аудиофайл.");
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                btnProcess.disabled = true;
+                btnProcess.innerHTML = "Подготовка...";
+                statusBadge.innerHTML = "Декодирование...";
+                statusBadge.className = "status-badge status-recording"; 
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    const offlineCtx = new AudioContextClass({ sampleRate: 16000 });
+                    const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
+                    const pcmFloat32 = audioBuffer.getChannelData(0); 
+
+                    if (welcomeScreen) welcomeScreen.style.display = 'none';
+
+                    statusBadge.innerHTML = "Подключение к AI...";
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    socket = new WebSocket(`${protocol}//${window.location.host}/ws/audio`);
+
+                    socket.onmessage = (event) => {
+                        console.log("Получен ответ от сервера!"); 
+                        const response = JSON.parse(event.data);
+                        if (response.status === "done" && response.text && response.text.trim() !== "ПУСТО") {
+                            let transBox = document.getElementById('transcription-content');
+                            if (!transBox) {
+                                transBox = document.createElement('div');
+                                transBox.id = 'transcription-content';
+                                transBox.className = 'content-text';
+                                document.getElementById('canvas-container').appendChild(transBox);
+                            }
+                            const newPhrase = document.createElement('div');
+                            newPhrase.className = 'fade-in-text mb-3'; 
+                            newPhrase.innerHTML = response.text;
+                            transBox.appendChild(newPhrase);
+                            renderMathInElement(newPhrase, { delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}, {left: "\\[", right: "\\]", display: true}, {left: "\\(", right: "\\)", display: false}], throwOnError: false });
+                            newPhrase.innerHTML = marked.parse(newPhrase.innerHTML);
+                            
+                            const scrollContainer = document.getElementById('scroll-container');
+                            scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+
+                            btnProcess.innerHTML = "Распознать";
+                            btnProcess.disabled = false;
+                            statusBadge.className = "status-badge status-success";
+                            statusBadge.innerHTML = "Готово к загрузке";
+                            
+                            if (socket) {
+                                socket.close();
+                                socket = null;
+                            }
+                        }
+                    };
+
+                    await new Promise(resolve => socket.onopen = resolve);
+                    statusBadge.innerHTML = "Распознавание...";
+
+                    const chunkSize = 4096;
+                    let offset = 0;
+
+                    function sendNextChunk() {
+                        if (offset < pcmFloat32.length) {
+                            const chunk = pcmFloat32.slice(offset, offset + chunkSize);
+                            socket.send(chunk.buffer);
+                            offset += chunkSize;
+                            
+                            let percent = Math.round((offset / pcmFloat32.length) * 100);
+                            btnProcess.innerHTML = `Отправка ${percent}%`;
+                            
+                            setTimeout(sendNextChunk, 10);
+                        } else {
+                            console.log("Файл отправлен, шлем тишину для смыва буфера...");
+                            const silentPadding = new Float32Array(32000); 
+                            socket.send(silentPadding.buffer);
+                            
+                            btnProcess.innerHTML = "Нейросеть думает...";
+                            statusBadge.innerHTML = "Ожидание ответа AI";
+                            statusBadge.className = "status-badge status-recording";
+                        }
+                    }
+
+                    sendNextChunk();
+
+                } catch (err) {
+                    console.error("Ошибка обработки файла:", err);
+                    alert("Ошибка при чтении аудиофайла. Попробуйте другой формат (mp3, wav).");
+                    btnProcess.disabled = false;
+                    btnProcess.innerHTML = "Распознать";
+                    statusBadge.className = "status-badge status-success";
+                    statusBadge.innerHTML = "Готово к загрузке";
+                }
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const btnOnline = document.getElementById("btn-online");
+                if(btnOnline) {
+                    switchMode('online');
+                }
+
+                const transBox = document.getElementById('transcription-content');
+                if (transBox) {
+                    renderMathInElement(transBox, {
+                        delimiters: [
+                            {left: "$$", right: "$$", display: true},
+                            {left: "$", right: "$", display: false},
+                            {left: "\\[", right: "\\]", display: true},
+                            {left: "\\(", right: "\\)", display: false}
+                        ],
+                        throwOnError: false
+                    });
+                }
+            });
         </script>
     </body>
 </html>

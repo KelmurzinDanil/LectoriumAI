@@ -23,8 +23,8 @@ class HistoryRepository {
             pqxx::work W(C);
 
             pqxx::result R = W.exec_params(R"(
-                SELECT id_history, user_id, title, content, created_at::text 
-                FROM history WHERE user_id = $1 ORDER BY created_at DESC)", userId);
+            SELECT id_history, user_id, title, content, created_at::text 
+            FROM history WHERE user_id = $1 ORDER BY created_at DESC)", userId);
     
             std::vector<History> records;
             for(auto row: R){
@@ -44,8 +44,9 @@ class HistoryRepository {
             pqxx::work W(C);
 
             pqxx::result R = W.exec_params(R"(
-                                    SELECT id_user, title, content, created_at 
-                                    FROM history WHERE id_user = $1 ORDER BY created_at DESC LIMIT = $2)", userId, limit);
+                SELECT id_history, user_id, title, content, created_at::text 
+                FROM history WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2)", 
+                userId, limit);
 
             std::vector<History> records;
             for(auto row: R){
@@ -58,6 +59,42 @@ class HistoryRepository {
                 });
             }
             return records;
+        }
+        
+        std::optional<History> getRecordById(int history_id, int user_id) {
+            pqxx::connection C(conn_str);
+            pqxx::work W(C);
+
+            pqxx::result R = W.exec_params(R"(
+                SELECT id_history, user_id, title, content, created_at::text 
+                FROM history 
+                WHERE id_history = $1 AND user_id = $2
+            )", history_id, user_id);
+
+            if (R.empty()) {
+                return std::nullopt;
+            }
+
+            return History{
+                R[0][0].as<int>(),
+                R[0][1].as<int>(),
+                R[0][2].as<std::string>(),
+                R[0][3].as<std::string>(),
+                R[0][4].as<std::string>()
+            };
+        }
+
+        void updateRecord(int historyId, int userId, const std::string& content) {
+            pqxx::connection C(conn_str);
+            pqxx::work W(C);
+
+            W.exec_params(R"(
+                UPDATE history 
+                SET content = $1 
+                WHERE id_history = $2 AND user_id = $3
+            )", content, historyId, userId);
+            
+            W.commit();
         }
 };
 
